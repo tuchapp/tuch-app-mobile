@@ -1,17 +1,14 @@
 /**
  * MoreScreen
  *
- * Navigation hub for all secondary screens.
- *
- * Links to:
- *  - Moods, Habits, Exercises, Reflections, Reviews,
- *    Memory, Profile, Settings, Notifications, Pricing,
- *    Privacy, Help, Terms
+ * Navigation hub for all secondary screens + sign out.
  */
-import { ScrollView, Text, Pressable, SafeAreaView, StyleSheet } from "react-native";
+import { ScrollView, View, Text, Pressable, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { MoreStackParamList } from "../navigation/MainTabs";
+import { supabase } from "../lib/supabase";
 
 type Nav = NativeStackNavigationProp<MoreStackParamList>;
 
@@ -34,8 +31,12 @@ const menuItems: { label: string; route: keyof MoreStackParamList }[] = [
 export function MoreScreen() {
   const navigation = useNavigation<Nav>();
 
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+  }
+
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.title}>More</Text>
         {menuItems.map((item) => (
@@ -47,19 +48,27 @@ export function MoreScreen() {
             <Text style={styles.menuLabel}>{item.label}</Text>
           </Pressable>
         ))}
+
+        {/* Sign out */}
+        <Pressable style={styles.signOutItem} onPress={handleSignOut}>
+          <Text style={styles.signOutLabel}>Sign out</Text>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: "#fff" },
   container: {
     padding: 24,
+    paddingBottom: 48,
   },
   title: {
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 16,
+    color: "#111",
   },
   menuItem: {
     paddingVertical: 16,
@@ -69,5 +78,17 @@ const styles = StyleSheet.create({
   menuLabel: {
     fontSize: 17,
     color: "#333",
+  },
+  signOutItem: {
+    paddingVertical: 16,
+    marginTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+    alignItems: "center",
+  },
+  signOutLabel: {
+    fontSize: 17,
+    color: "#dc2626",
+    fontWeight: "600",
   },
 });
