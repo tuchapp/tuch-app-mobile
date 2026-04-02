@@ -26,6 +26,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "owner": "tuchapp",
+    "extra": {
+      "eas": {
+        "projectId": "949aac69-6d35-445d-8115-be5f07a3d26f"
+      }
     }
   }
 }
