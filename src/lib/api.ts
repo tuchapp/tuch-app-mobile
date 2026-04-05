@@ -7,7 +7,7 @@ const API_URL =
   "";
 
 if (!API_URL) {
-  throw new Error("Missing EXPO_PUBLIC_API_URL");
+  console.error("Missing EXPO_PUBLIC_API_URL — API calls will fail");
 }
 
 export class ApiAuthError extends Error {

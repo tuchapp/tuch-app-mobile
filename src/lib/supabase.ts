@@ -14,8 +14,8 @@ const supabaseAnonKey =
   "";
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
-    "Missing EXPO_PUBLIC_SUPABASE_URL or EXPO_PUBLIC_SUPABASE_ANON_KEY"
+  console.error(
+    "Missing EXPO_PUBLIC_SUPABASE_URL or EXPO_PUBLIC_SUPABASE_ANON_KEY — auth will not work"
   );
 }
 
