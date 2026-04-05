@@ -27,6 +27,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Constants from "expo-constants";
 import { supabase } from "../lib/supabase";
 import { apiGet, apiPost, apiPatch } from "../lib/api";
+import { SkeletonScreen } from "../components/Skeleton";
 import { COACHING_TONES, getTone, DEFAULT_COACHING_TONE } from "../utils/coaching-tones";
 import type {
   ApiEnvelope,
@@ -801,10 +802,7 @@ export function ChatScreen() {
   if (loadingSessions) {
     return (
       <SafeAreaView style={s.safeArea}>
-        <View style={s.center}>
-          <ActivityIndicator size="large" color={BRAND} />
-          <Text style={s.loadingText}>Connecting to your coach...</Text>
-        </View>
+        <SkeletonScreen />
       </SafeAreaView>
     );
   }

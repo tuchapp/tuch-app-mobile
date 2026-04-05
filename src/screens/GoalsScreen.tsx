@@ -25,6 +25,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useFocusEffect } from "@react-navigation/native";
 import { apiGet, apiPost } from "../lib/api";
+import { SkeletonList } from "../components/Skeleton";
+import { DatePickerField } from "../components/DatePickerField";
 import { useAccountabilityDays } from "../hooks/use-accountability-days";
 import {
   DAYS,
@@ -372,7 +374,9 @@ export function GoalsScreen({ navigation }: Props) {
   if (loading && goals.length === 0) {
     return (
       <SafeAreaView style={s.safeArea}>
-        <ActivityIndicator size="large" color="#7e22ce" style={{ marginTop: 40 }} />
+        <View style={{ padding: 16 }}>
+          <SkeletonList count={4} />
+        </View>
       </SafeAreaView>
     );
   }
@@ -449,19 +453,17 @@ export function GoalsScreen({ navigation }: Props) {
                   {/* End date */}
                   <Text style={s.label}>
                     End date{" "}
-                    <Text style={s.hint}>(YYYY-MM-DD, needed for reminders)</Text>
+                    <Text style={s.hint}>(needed for reminders)</Text>
                   </Text>
-                  <TextInput
-                    style={s.input}
+                  <DatePickerField
+                    label="End date"
                     value={targetDate}
-                    onChangeText={(t) => {
-                      setTargetDate(t);
+                    onChange={(d) => {
+                      setTargetDate(d);
                       if (showConfirm) setShowConfirm(false);
                     }}
-                    placeholder="2026-12-31"
-                    placeholderTextColor="#999"
-                    keyboardType="numbers-and-punctuation"
-                    maxLength={10}
+                    placeholder="Select end date"
+                    minimumDate={new Date()}
                   />
 
                   {/* Category */}

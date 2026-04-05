@@ -24,6 +24,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useFocusEffect } from "@react-navigation/native";
 import { apiGet, apiPatch, apiDelete } from "../lib/api";
+import { DatePickerField } from "../components/DatePickerField";
 import { useAccountabilityDays } from "../hooks/use-accountability-days";
 import {
   DAYS,
@@ -195,17 +196,13 @@ export function GoalEditScreen({ route, navigation }: Props) {
           />
 
           {/* End date */}
-          <Text style={s.label}>
-            End date <Text style={s.hint}>(YYYY-MM-DD)</Text>
-          </Text>
-          <TextInput
-            style={s.input}
+          <Text style={s.label}>End date</Text>
+          <DatePickerField
+            label="End date"
             value={targetDate}
-            onChangeText={setTargetDate}
-            placeholder="2026-12-31"
-            placeholderTextColor="#999"
-            keyboardType="numbers-and-punctuation"
-            maxLength={10}
+            onChange={setTargetDate}
+            placeholder="Select end date"
+            minimumDate={new Date()}
           />
 
           {/* Category */}

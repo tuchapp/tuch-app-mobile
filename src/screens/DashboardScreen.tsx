@@ -21,6 +21,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { apiGet } from "../lib/api";
+import { SkeletonScreen } from "../components/Skeleton";
 import { formatDate, formatRelativeDate } from "../utils/format-date";
 import type { DashboardPayload, ApiEnvelope, Goal } from "../types/api-types";
 
@@ -201,10 +202,7 @@ export function DashboardScreen() {
   if (loading) {
     return (
       <SafeAreaView style={s.safeArea}>
-        <View style={s.centered}>
-          <ActivityIndicator size="large" color="#7e22ce" />
-          <Text style={s.loadingText}>Loading your dashboard...</Text>
-        </View>
+        <SkeletonScreen />
       </SafeAreaView>
     );
   }

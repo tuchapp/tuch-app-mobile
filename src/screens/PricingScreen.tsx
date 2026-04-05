@@ -17,7 +17,7 @@ import {
   StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import * as Linking from "expo-linking";
+import * as WebBrowser from "expo-web-browser";
 import { apiPost } from "../lib/api";
 
 type CheckoutResponse = { data: { url: string } };
@@ -44,7 +44,7 @@ export function PricingScreen() {
       );
       const url = res.data?.url;
       if (url) {
-        await Linking.openURL(url);
+        await WebBrowser.openBrowserAsync(url);
       } else {
         setError("Could not start checkout. Please try again.");
       }

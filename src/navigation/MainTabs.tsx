@@ -1,6 +1,6 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { Text } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 // Tab screens
 import { DashboardScreen } from "../screens/DashboardScreen";
@@ -150,6 +150,7 @@ export function MainTabs() {
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: "#7e22ce",
+        tabBarInactiveTintColor: "#9ca3af",
       }}
     >
       <Tab.Screen
@@ -157,7 +158,9 @@ export function MainTabs() {
         component={DashboardScreen}
         options={{
           title: "Home",
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>H</Text>,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? "home" : "home-outline"} size={24} color={color} />
+          ),
         }}
       />
       <Tab.Screen
@@ -166,7 +169,9 @@ export function MainTabs() {
         options={{
           title: "Goals",
           headerShown: false,
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>G</Text>,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? "flag" : "flag-outline"} size={24} color={color} />
+          ),
         }}
       />
       <Tab.Screen
@@ -174,7 +179,9 @@ export function MainTabs() {
         component={ChatScreen}
         options={{
           title: "Coach",
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>C</Text>,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? "chatbubble" : "chatbubble-outline"} size={24} color={color} />
+          ),
         }}
       />
       <Tab.Screen
@@ -182,7 +189,9 @@ export function MainTabs() {
         component={JournalScreen}
         options={{
           title: "Journal",
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>J</Text>,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? "book" : "book-outline"} size={24} color={color} />
+          ),
         }}
       />
       <Tab.Screen
@@ -191,7 +200,9 @@ export function MainTabs() {
         options={{
           title: "More",
           headerShown: false,
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>...</Text>,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? "ellipsis-horizontal-circle" : "ellipsis-horizontal"} size={24} color={color} />
+          ),
         }}
       />
     </Tab.Navigator>
