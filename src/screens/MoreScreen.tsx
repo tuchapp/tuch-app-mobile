@@ -43,7 +43,7 @@ export function MoreScreen() {
           <Pressable
             key={item.route}
             style={styles.menuItem}
-            onPress={() => navigation.navigate(item.route as any)}
+            onPress={() => navigation.navigate(item.route)}
           >
             <Text style={styles.menuLabel}>{item.label}</Text>
           </Pressable>

@@ -206,7 +206,7 @@ function TonePicker({
               key={t.value}
               style={[s.tonePill, active && s.tonePillActive]}
               disabled={saving}
-              onPress={() => void handleSelect(t.value)}
+              onPress={() => { handleSelect(t.value); }}
             >
               <Text style={[s.tonePillText, active && s.tonePillTextActive]}>
                 {t.label}
@@ -323,9 +323,8 @@ export function ChatScreen() {
 
   // ── Initial load ──
   useEffect(() => {
-    void loadInitialData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    loadInitialData();
+  }, []); // loadInitialData is stable (defined outside render cycle)
 
   async function loadInitialData() {
     try {

@@ -9,7 +9,7 @@
  * On completion, calls APIs in sequence then lets the auth state
  * listener in App.tsx re-check onboarding status and navigate.
  */
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -118,6 +118,14 @@ export function OnboardingScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [setupMessage, setSetupMessage] = useState(SETUP_MESSAGES[0]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const msgTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => {
+      if (msgTimerRef.current) clearInterval(msgTimerRef.current);
+    };
+  }, []);
 
   const meta = STEP_META[step - 1];
 
@@ -156,7 +164,7 @@ export function OnboardingScreen() {
 
     // Cycle through setup messages
     let msgIndex = 0;
-    const msgTimer = setInterval(() => {
+    msgTimerRef.current = setInterval(() => {
       msgIndex = Math.min(msgIndex + 1, SETUP_MESSAGES.length - 1);
       setSetupMessage(SETUP_MESSAGES[msgIndex]);
     }, 2800);
@@ -220,7 +228,10 @@ export function OnboardingScreen() {
       setErrorMessage(msg);
       setSubmitting(false);
     } finally {
-      clearInterval(msgTimer);
+      if (msgTimerRef.current) {
+        clearInterval(msgTimerRef.current);
+        msgTimerRef.current = null;
+      }
     }
   }, [
     submitting,
@@ -276,7 +287,7 @@ export function OnboardingScreen() {
             <View
               style={[
                 s.progressFill,
-                { width: `${Math.round((step / TOTAL_STEPS) * 100)}%` as any },
+                { width: `${Math.round((step / TOTAL_STEPS) * 100)}%` },
               ]}
             />
           </View>

@@ -73,14 +73,17 @@ const BODY_REGIONS = [
 // Helpers
 // ---------------------------------------------------------------------------
 
-function recordCompletion(category: string, name: string, durationSeconds: number) {
-  apiPost("/api/v1/exercises/completions", {
-    exercise_type: category,
-    exercise_name: name,
-    duration_seconds: durationSeconds,
-  }).catch(() => {
+async function recordCompletion(category: string, name: string, durationSeconds: number) {
+  try {
+    await apiPost("/api/v1/exercises/completions", {
+      exercise_type: category,
+      exercise_name: name,
+      duration_seconds: durationSeconds,
+    });
+  } catch {
     // Non-fatal — completion tracking should not break the exercise flow
-  });
+    console.warn("Failed to record exercise completion");
+  }
 }
 
 // ---------------------------------------------------------------------------

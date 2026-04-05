@@ -11,7 +11,7 @@ import { apiGet } from "./src/lib/api";
 import { AuthStack } from "./src/navigation/AuthStack";
 import { OnboardingStack } from "./src/navigation/OnboardingStack";
 import { MainTabs } from "./src/navigation/MainTabs";
-import type { AuthContext as AuthContextType } from "./src/types/api-types";
+import type { AuthContext as AuthContextType, ApiEnvelope } from "./src/types/api-types";
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
@@ -47,7 +47,7 @@ export default function App() {
 
   async function checkOnboarding(s: Session) {
     try {
-      const ctx = await apiGet<{ data: AuthContextType }>("/api/v1/auth/me");
+      const ctx = await apiGet<ApiEnvelope<AuthContextType>>("/api/v1/auth/me");
       setOnboardingComplete(ctx.data.user.onboarding_status === "completed");
     } catch {
       // If auth/me fails, assume onboarding not done
