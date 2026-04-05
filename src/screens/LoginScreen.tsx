@@ -44,6 +44,7 @@ export function LoginScreen({ navigation }: Props) {
   const [signupMessage, setSignupMessage] = useState<string | null>(null);
   const [signupSuccess, setSignupSuccess] = useState(false);
   const [signupLoading, setSignupLoading] = useState(false);
+  const [smsConsent, setSmsConsent] = useState(false);
 
   async function handlePasswordLogin() {
     if (!identifier || !password) {
@@ -295,6 +296,31 @@ export function LoginScreen({ navigation }: Props) {
                     placeholderTextColor="#999"
                   />
 
+                  {/* SMS consent — required for carrier compliance */}
+                  <Pressable
+                    style={s.consentRow}
+                    onPress={() => setSmsConsent((v) => !v)}
+                  >
+                    <View
+                      style={[
+                        s.checkbox,
+                        smsConsent && s.checkboxChecked,
+                      ]}
+                    >
+                      {smsConsent && (
+                        <Text style={s.checkmark}>&#10003;</Text>
+                      )}
+                    </View>
+                    <Text style={s.consentText}>
+                      I agree to receive transactional SMS notifications from
+                      Tuch (accountability check-ins and wellness reminders).
+                      Msg frequency varies (typically 1-3/day). Msg&Data rates
+                      may apply. Reply <Text style={s.bold}>STOP</Text> to opt
+                      out, <Text style={s.bold}>HELP</Text> for help. Consent
+                      is not required for purchase.
+                    </Text>
+                  </Pressable>
+
                   {signupMessage && (
                     <Text style={s.error}>{signupMessage}</Text>
                   )}
@@ -418,5 +444,32 @@ const s = StyleSheet.create({
     color: "#888",
     textAlign: "center",
     marginTop: 8,
+  },
+  consentRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    paddingVertical: 8,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderWidth: 2,
+    borderColor: "#d1d5db",
+    borderRadius: 4,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 2,
+  },
+  checkboxChecked: {
+    backgroundColor: "#7e22ce",
+    borderColor: "#7e22ce",
+  },
+  checkmark: { color: "#fff", fontSize: 14, fontWeight: "700" },
+  consentText: {
+    flex: 1,
+    fontSize: 12,
+    color: "#666",
+    lineHeight: 18,
   },
 });

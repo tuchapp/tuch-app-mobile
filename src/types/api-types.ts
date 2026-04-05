@@ -3,6 +3,15 @@ export type ApiEnvelope<T> = {
   meta: Record<string, unknown>;
 };
 
+export type DailyIntention = {
+  id: string;
+  user_id: string;
+  intention_text: string;
+  intention_date: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export type GoalClarityResult = {
   title: string | null;
   objective: string | null;
