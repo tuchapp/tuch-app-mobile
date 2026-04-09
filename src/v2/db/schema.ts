@@ -9,6 +9,7 @@ export const CREATE_AGENT_PROFILE = `
     agent_id         TEXT NOT NULL,
     name             TEXT,
     coaching_tone    TEXT NOT NULL DEFAULT 'balanced',
+    personality_id   TEXT NOT NULL DEFAULT 'spark',
     registered_at    TEXT,
     last_signal_pull TEXT,
     dominant_state   TEXT,

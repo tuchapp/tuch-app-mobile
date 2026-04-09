@@ -14,8 +14,12 @@ try {
 }
 
 export interface SpeakOptions {
-  /** coaching_tone from agent_profile: supportive | structured | direct | reflective */
+  /** coaching_tone from agent_profile */
   tone?: string;
+  /** personality.speechRate — takes precedence over tone-based defaults */
+  speechRate?: number;
+  /** personality.speechPitch — takes precedence over tone-based defaults */
+  speechPitch?: number;
   language?: string;
 }
 
@@ -72,8 +76,9 @@ export class VoiceService extends EventEmitter {
   /** Speak text aloud, adapting rate/pitch to coaching tone. Returns after speech completes. */
   async speak(text: string, options: SpeakOptions = {}): Promise<void> {
     const tone = options.tone ?? 'supportive';
-    const rate = TONE_SPEECH_RATES[tone] ?? 1.0;
-    const pitch = TONE_PITCHES[tone] ?? 1.0;
+    // Personality values take precedence over tone-based defaults
+    const rate = options.speechRate ?? TONE_SPEECH_RATES[tone] ?? 1.0;
+    const pitch = options.speechPitch ?? TONE_PITCHES[tone] ?? 1.0;
     return new Promise((resolve) => {
       Speech.speak(text, {
         language: options.language ?? 'en-US',

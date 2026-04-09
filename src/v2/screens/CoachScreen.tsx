@@ -13,6 +13,7 @@ import { useAgent } from '../context/AgentContext';
 import { apiClient } from '../api/client';
 import { buildSanitizedContext } from '../voice/sanitized_context_builder';
 import { voiceService } from '../voice/voice_service';
+import { isNetworkError } from '../api/client';
 
 interface Message {
   id: string;
@@ -23,13 +24,15 @@ interface Message {
 
 export default function CoachScreen() {
   const { conversation: convRepo, events } = useDatabase();
-  const { profile } = useAgent();
+  const { profile, personality } = useAgent();
   const dbContext = useDatabase();
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
+  const [pendingMessage, setPendingMessage] = useState<string | null>(null);
   const [isVoiceMode, setIsVoiceMode] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [sessionTurn, setSessionTurn] = useState(1);
@@ -50,6 +53,18 @@ export default function CoachScreen() {
       waveAnim.setValue(1);
     }
   }, [isVoiceMode, isRecording, waveAnim]);
+
+  // Auto-resend pending message when we come back online
+  useEffect(() => {
+    if (!isOffline && pendingMessage) {
+      const msg = pendingMessage;
+      setPendingMessage(null);
+      // Remove the offline placeholder message
+      setMessages((prev) => prev.filter((m) => !m.id.startsWith('offline-')));
+      send(msg);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOffline]);
 
   const ensureConversation = useCallback(async () => {
     if (conversationId) return conversationId;
@@ -77,21 +92,33 @@ export default function CoachScreen() {
     await convRepo.addMessage(convId, 'user', text);
     await events.create({ event_name: 'chat_message_sent', domain: 'coach', entity_type: 'conversation', entity_id: convId });
 
-    // Build sanitized context (no PII)
-    // NOTE: user message text is passed as-is; the backend will not receive goal titles,
-    // journal text, or names — those never appear in this chat context.
+    // Build sanitized context — personality + tone included, no PII
     let db: any;
     try {
-      // Access the raw db via a DB repository hack
       db = (dbContext.goals as any).db;
     } catch (_) {}
 
     const sanitizedCtx = db
-      ? await buildSanitizedContext(db, text, sessionTurn)
-      : { dominant_state: null, active_patterns: [], signal_snapshot: {}, user_message: text, session_turn: sessionTurn };
+      ? await buildSanitizedContext(db, {
+          userMessage: text,
+          sessionTurn,
+          agentName: profile?.agent_name ?? 'your coach',
+          personalityId: personality?.id ?? 'spark',
+          agentTone: profile?.coaching_tone ?? 'supportive',
+        })
+      : {
+          personality_id: personality?.id ?? 'spark',
+          agent_tone: profile?.coaching_tone ?? 'supportive',
+          agent_name: profile?.agent_name ?? 'your coach',
+          dominant_state: null,
+          active_patterns: [],
+          signal_snapshot: {},
+          user_message: text,
+          session_turn: sessionTurn,
+        };
 
     try {
-      const res = await apiClient.post('/agent/query', {
+      const res = await apiClient.post<any>('/agent/query', {
         query_type: 'coaching_response',
         sanitized_context: sanitizedCtx,
       });
@@ -104,17 +131,38 @@ export default function CoachScreen() {
       };
       setMessages((prev) => [...prev, assistantMsg]);
       await convRepo.addMessage(convId, 'assistant', responseText);
+      setIsOffline(false);
+      setPendingMessage(null);
 
-      // Speak in voice mode
+      // Speak in voice mode using personality-aware TTS
       if (isVoiceMode) {
-        await voiceService.speak(responseText, { tone: profile?.coaching_tone });
+        await voiceService.speak(responseText, {
+          tone: profile?.coaching_tone,
+          speechRate: personality?.speechRate,
+          speechPitch: personality?.speechPitch,
+        });
       }
     } catch (e: any) {
-      const fallback = "I couldn't reach the brain right now. Try again in a moment.";
-      setMessages((prev) => [...prev, { id: `e-${Date.now()}`, role: 'assistant', content: fallback, created_at: new Date().toISOString() }]);
+      if (isNetworkError(e)) {
+        setIsOffline(true);
+        setPendingMessage(text);
+        setMessages((prev) => [...prev, {
+          id: `offline-${Date.now()}`,
+          role: 'assistant',
+          content: 'Offline — I\'ll respond when you\'re back online.',
+          created_at: new Date().toISOString(),
+        }]);
+      } else {
+        setMessages((prev) => [...prev, {
+          id: `e-${Date.now()}`,
+          role: 'assistant',
+          content: 'Something went wrong. Try again in a moment.',
+          created_at: new Date().toISOString(),
+        }]);
+      }
     }
     setIsLoading(false);
-  }, [convRepo, events, ensureConversation, sessionTurn, isVoiceMode, profile, dbContext]);
+  }, [convRepo, events, ensureConversation, sessionTurn, isVoiceMode, profile, personality, dbContext]);
 
   const handleMicPress = async () => {
     if (isRecording) {

@@ -1,30 +1,55 @@
 /**
  * Builds a sanitized context payload safe for POST /api/v2/agent/query.
- * NEVER includes: goal titles, journal text, names, or any personal content.
- * Only behavioral abstractions + signal scores.
+ * NEVER includes: goal titles, journal text, or any personal content.
+ *
+ * SAFE to include (not PII):
+ * - personality_id (enum of 5 values)
+ * - agent_tone (enum of coaching tone values)
+ * - agent_name (the name the user gave their agent — it's a product name, not a real name)
+ * - behavioral feature scores (anonymized counts)
+ * - signal state (computed from anonymized features)
  */
 import { SQLiteDatabase } from 'expo-sqlite';
 
 export interface SanitizedContextPayload {
+  /** Enum: sage | spark | anchor | ember | forge */
+  personality_id: string;
+  /** Enum: supportive | direct | analytical | motivational */
+  agent_tone: string;
+  /** The name the user gave their agent (not their own name) */
+  agent_name: string;
   dominant_state: string | null;
   active_patterns: string[];
   signal_snapshot: Record<string, number>;
-  /** Plain-text user message — no names or specifics should be passed here */
+  /** Plain-text user message — caller must not include real names/places */
   user_message?: string;
   session_turn: number;
 }
 
+export interface ContextOptions {
+  userMessage?: string;
+  sessionTurn?: number;
+  agentName?: string;
+  personalityId?: string;
+  agentTone?: string;
+}
+
 /**
  * Build sanitized context from local SQLite state.
- * @param db - Open SQLite database
- * @param userMessage - Raw user text (caller responsible for omitting PII)
- * @param sessionTurn - Turn index within the current conversation
+ * Includes personality and tone so the backend can tailor the coaching voice.
  */
 export async function buildSanitizedContext(
   db: SQLiteDatabase,
-  userMessage?: string,
-  sessionTurn: number = 1,
+  options: ContextOptions = {},
 ): Promise<SanitizedContextPayload> {
+  const {
+    userMessage,
+    sessionTurn = 1,
+    agentName = 'your coach',
+    personalityId = 'spark',
+    agentTone = 'supportive',
+  } = options;
+
   // Read last signal pull from sync_state
   let dominant_state: string | null = null;
   let signal_snapshot: Record<string, number> = {};
@@ -42,7 +67,7 @@ export async function buildSanitizedContext(
     // No signals synced yet — proceed with empty
   }
 
-  // Read active patterns (pattern_key only, no content)
+  // Read active patterns (pattern_key only — no content)
   let active_patterns: string[] = [];
   try {
     const patternRows = await db.getAllAsync<{ memory_type: string }>(
@@ -56,6 +81,9 @@ export async function buildSanitizedContext(
   }
 
   return {
+    personality_id: personalityId,
+    agent_tone: agentTone,
+    agent_name: agentName,
     dominant_state,
     active_patterns,
     signal_snapshot,

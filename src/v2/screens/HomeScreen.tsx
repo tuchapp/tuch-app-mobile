@@ -9,13 +9,7 @@ import {
 } from 'react-native';
 import { useAgent } from '../context/AgentContext';
 import { useDatabase } from '../context/DatabaseContext';
-
-function getTimeOfDayGreeting(): string {
-  const h = new Date().getHours();
-  if (h < 12) return 'Good morning';
-  if (h < 17) return 'Good afternoon';
-  return 'Good evening';
-}
+import { getGreeting } from '../agent/personality';
 
 const STATE_COPY: Record<string, { label: string; description: string; color: string }> = {
   stress_rising: {
@@ -51,7 +45,7 @@ const STATE_COPY: Record<string, { label: string; description: string; color: st
 };
 
 export default function HomeScreen({ navigation }: any) {
-  const { profile, signals, isReady } = useAgent();
+  const { profile, signals, personality, isReady } = useAgent();
   const { goals } = useDatabase();
   const [focusGoal, setFocusGoal] = useState<any>(null);
 
@@ -78,7 +72,7 @@ export default function HomeScreen({ navigation }: any) {
   }
 
   const agentName = profile?.agent_name ?? 'Your Agent';
-  const greeting = `${getTimeOfDayGreeting()}, I'm ${agentName}`;
+  const greeting = getGreeting(agentName, personality);
   const stateInfo = STATE_COPY[signals.dominant_state] ?? STATE_COPY.stable;
 
   return (

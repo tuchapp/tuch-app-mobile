@@ -2,15 +2,17 @@
  * AgentContext — loads agent profile, last signals, and dominant state.
  * Exposes agent-level state to the component tree.
  */
-import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback, useRef } from 'react';
 import { useDatabase } from './DatabaseContext';
 import { apiClient } from '../api/client';
+import { AgentPersonality, getPersonality } from '../agent/personality';
 
 export interface AgentProfile {
   agent_id: string;
   agent_name: string;
   timezone: string;
   coaching_tone: string;
+  personality_id: string;
   preferred_message_length: string;
   quiet_hours_start: string | null;
   quiet_hours_end: string | null;
@@ -42,6 +44,8 @@ const DEFAULT_SIGNALS: SignalState = {
 interface AgentContextValue {
   profile: AgentProfile | null;
   signals: SignalState;
+  personality: AgentPersonality;
+  lastSignalRefresh: Date | null;
   isReady: boolean;
   refreshSignals: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -49,11 +53,15 @@ interface AgentContextValue {
 
 const AgentContext = createContext<AgentContextValue | null>(null);
 
+const SIGNAL_REFRESH_INTERVAL_MS = 4 * 60 * 60 * 1000; // 4 hours
+
 export function AgentProvider({ children }: { children: ReactNode }) {
   const { agentProfile } = useDatabase();
   const [profile, setProfile] = useState<AgentProfile | null>(null);
   const [signals, setSignals] = useState<SignalState>(DEFAULT_SIGNALS);
+  const [lastSignalRefresh, setLastSignalRefresh] = useState<Date | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const refreshProfile = useCallback(async () => {
     try {
@@ -78,9 +86,10 @@ export function AgentProvider({ children }: { children: ReactNode }) {
           recovery_score: d.signals?.recovery_score ?? 50,
           computed_at: d.computed_at ?? null,
         });
+        setLastSignalRefresh(new Date());
       }
     } catch (e) {
-      // Offline or not registered yet — use defaults silently
+      // Offline or not registered yet — keep last known signals silently
     }
   }, []);
 
@@ -90,10 +99,23 @@ export function AgentProvider({ children }: { children: ReactNode }) {
       await refreshSignals();
       setIsReady(true);
     })();
+
+    // Auto-refresh signals every 4 hours in the background
+    refreshIntervalRef.current = setInterval(() => {
+      refreshSignals();
+    }, SIGNAL_REFRESH_INTERVAL_MS);
+
+    return () => {
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+      }
+    };
   }, [refreshProfile, refreshSignals]);
 
+  const personality = getPersonality(profile?.personality_id);
+
   return (
-    <AgentContext.Provider value={{ profile, signals, isReady, refreshSignals, refreshProfile }}>
+    <AgentContext.Provider value={{ profile, signals, personality, lastSignalRefresh, isReady, refreshSignals, refreshProfile }}>
       {children}
     </AgentContext.Provider>
   );

@@ -9,8 +9,8 @@ import {
 import { useAgent } from '../context/AgentContext';
 import { useDatabase } from '../context/DatabaseContext';
 import { apiClient } from '../api/client';
-
-const TONES = ['supportive', 'structured', 'direct', 'reflective'];
+import { COACHING_TONES } from '../../utils/coaching-tones';
+import { AGENT_PERSONALITIES, DEFAULT_PERSONALITY_ID } from '../agent/personality';
 
 export default function YouScreen() {
   const { profile, refreshProfile } = useAgent();
@@ -18,6 +18,9 @@ export default function YouScreen() {
 
   const [agentName, setAgentName] = useState(profile?.agent_name ?? '');
   const [selectedTone, setSelectedTone] = useState(profile?.coaching_tone ?? 'supportive');
+  const [selectedPersonality, setSelectedPersonality] = useState(
+    profile?.personality_id ?? DEFAULT_PERSONALITY_ID,
+  );
   const [quietStart, setQuietStart] = useState(profile?.quiet_hours_start ?? '21:00');
   const [quietEnd, setQuietEnd] = useState(profile?.quiet_hours_end ?? '07:00');
   const [smsEnabled, setSmsEnabled] = useState(false);
@@ -28,6 +31,7 @@ export default function YouScreen() {
   useEffect(() => {
     setAgentName(profile?.agent_name ?? '');
     setSelectedTone(profile?.coaching_tone ?? 'supportive');
+    setSelectedPersonality(profile?.personality_id ?? DEFAULT_PERSONALITY_ID);
     setQuietStart(profile?.quiet_hours_start ?? '21:00');
     setQuietEnd(profile?.quiet_hours_end ?? '07:00');
   }, [profile]);
@@ -47,6 +51,7 @@ export default function YouScreen() {
       await agentProfile.upsert({
         agent_name: agentName.trim(),
         coaching_tone: selectedTone,
+        personality_id: selectedPersonality,
         quiet_hours_start: quietStart,
         quiet_hours_end: quietEnd,
         updated_at: new Date().toISOString(),
@@ -129,17 +134,41 @@ export default function YouScreen() {
             placeholder="Name your agent"
             accessibilityLabel="Agent name"
           />
+          <Text style={styles.fieldLabel}>Personality</Text>
+          <View style={styles.personalityGrid}>
+            {AGENT_PERSONALITIES.map((p) => (
+              <TouchableOpacity
+                key={p.id}
+                style={[
+                  styles.personalityCard,
+                  selectedPersonality === p.id && {
+                    borderColor: p.accentColor,
+                    borderWidth: 2,
+                    backgroundColor: `${p.accentColor}18`,
+                  },
+                ]}
+                onPress={() => setSelectedPersonality(p.id)}
+                accessibilityLabel={`${p.name} personality`}
+              >
+                <Text style={[styles.personalityName, selectedPersonality === p.id && { color: p.accentColor }]}>
+                  {p.name}
+                </Text>
+                <Text style={styles.personalityDesc}>{p.tagline}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
           <Text style={styles.fieldLabel}>Coaching tone</Text>
           <View style={styles.toneRow}>
-            {TONES.map((t) => (
+            {COACHING_TONES.map((t) => (
               <TouchableOpacity
-                key={t}
-                style={[styles.toneBtn, selectedTone === t && styles.toneBtnActive]}
-                onPress={() => setSelectedTone(t)}
-                accessibilityLabel={`${t} tone`}
+                key={t.value}
+                style={[styles.toneBtn, selectedTone === t.value && styles.toneBtnActive]}
+                onPress={() => setSelectedTone(t.value)}
+                accessibilityLabel={`${t.label} tone`}
               >
-                <Text style={[styles.toneBtnText, selectedTone === t && styles.toneBtnTextActive]}>
-                  {t.charAt(0).toUpperCase() + t.slice(1)}
+                <Text style={[styles.toneBtnText, selectedTone === t.value && styles.toneBtnTextActive]}>
+                  {t.label}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -213,6 +242,10 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 15, fontWeight: '700', color: '#1A1A1A', marginBottom: 14 },
   fieldLabel: { fontSize: 12, fontWeight: '600', color: '#888', marginBottom: 6, marginTop: 10, textTransform: 'uppercase', letterSpacing: 0.4 },
   input: { backgroundColor: '#F5F5F5', borderRadius: 8, padding: 12, fontSize: 15, borderWidth: 1, borderColor: '#E8E8E8' },
+  personalityGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4, marginBottom: 8 },
+  personalityCard: { width: '47%', backgroundColor: '#F8F8F8', borderRadius: 10, padding: 10, borderWidth: 1, borderColor: '#E8E8E8' },
+  personalityName: { fontSize: 14, fontWeight: '700', color: '#1A1A1A', marginBottom: 2 },
+  personalityDesc: { fontSize: 12, color: '#666', lineHeight: 16 },
   toneRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
   toneBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: '#F0F0F0' },
   toneBtnActive: { backgroundColor: '#5BA8C4' },
