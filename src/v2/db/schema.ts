@@ -7,9 +7,13 @@ export const CREATE_AGENT_PROFILE = `
   CREATE TABLE IF NOT EXISTS agent_profile (
     id               INTEGER PRIMARY KEY CHECK (id = 1),
     agent_id         TEXT NOT NULL,
-    name             TEXT,
-    coaching_tone    TEXT NOT NULL DEFAULT 'balanced',
+    agent_name       TEXT,
+    coaching_tone    TEXT NOT NULL DEFAULT 'supportive',
     personality_id   TEXT NOT NULL DEFAULT 'spark',
+    quiet_hours_start TEXT,
+    quiet_hours_end   TEXT,
+    timezone         TEXT NOT NULL DEFAULT 'America/New_York',
+    onboarding_completed INTEGER NOT NULL DEFAULT 0,
     registered_at    TEXT,
     last_signal_pull TEXT,
     dominant_state   TEXT,
@@ -146,6 +150,38 @@ export const CREATE_SYNC_STATE = `
     updated_at          TEXT NOT NULL DEFAULT (datetime('now'))
   );
 `;
+
+/**
+ * Column migrations — ADD COLUMN statements for existing installs.
+ * These are safe to run on both new and existing databases (ALTER TABLE ADD COLUMN is idempotent-safe
+ * since we catch the "duplicate column" error in runMigrations).
+ */
+export const COLUMN_MIGRATIONS: Array<{ sql: string; description: string }> = [
+  {
+    sql: `ALTER TABLE agent_profile ADD COLUMN agent_name TEXT`,
+    description: 'Rename name -> agent_name for spec alignment',
+  },
+  {
+    sql: `ALTER TABLE agent_profile ADD COLUMN personality_id TEXT NOT NULL DEFAULT 'spark'`,
+    description: 'Add personality_id column',
+  },
+  {
+    sql: `ALTER TABLE agent_profile ADD COLUMN quiet_hours_start TEXT`,
+    description: 'Add quiet_hours_start',
+  },
+  {
+    sql: `ALTER TABLE agent_profile ADD COLUMN quiet_hours_end TEXT`,
+    description: 'Add quiet_hours_end',
+  },
+  {
+    sql: `ALTER TABLE agent_profile ADD COLUMN timezone TEXT NOT NULL DEFAULT 'America/New_York'`,
+    description: 'Add timezone',
+  },
+  {
+    sql: `ALTER TABLE agent_profile ADD COLUMN onboarding_completed INTEGER NOT NULL DEFAULT 0`,
+    description: 'Add onboarding_completed flag',
+  },
+];
 
 export const ALL_MIGRATIONS = [
   CREATE_AGENT_PROFILE,

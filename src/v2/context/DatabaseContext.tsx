@@ -4,7 +4,7 @@
  */
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { View, ActivityIndicator, Text } from 'react-native';
-import { initDatabase, getDatabase } from '../db';
+import { initDatabase, getDatabase } from '../db/index';
 import { GoalsRepository } from '../db/repositories/goals';
 import { JournalRepository } from '../db/repositories/journal';
 import { MoodRepository } from '../db/repositories/mood';
