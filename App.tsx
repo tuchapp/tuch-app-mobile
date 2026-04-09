@@ -4,12 +4,14 @@ import { NavigationContainer } from "@react-navigation/native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import * as Linking from "expo-linking";
 import Toast from "react-native-toast-message";
+import * as Sentry from "@sentry/react-native";
 import type { Session } from "@supabase/supabase-js";
 
 import { supabase } from "./src/lib/supabase";
 import { AuthContext } from "./src/lib/auth-context";
 import { apiGet, apiPost } from "./src/lib/api";
 import { linking } from "./src/lib/linking";
+import { initSentry, setSentryUser, clearSentryUser } from "./src/lib/sentry";
 import {
   setupNotificationHandler,
   registerForPushNotifications,
@@ -19,10 +21,13 @@ import { OnboardingStack } from "./src/navigation/OnboardingStack";
 import { MainTabs } from "./src/navigation/MainTabs";
 import type { AuthContext as AuthContextType, ApiEnvelope } from "./src/types/api-types";
 
+// Initialize Sentry before anything else renders
+initSentry();
+
 // Configure notification display behaviour at module level
 setupNotificationHandler();
 
-export default function App() {
+function AppRoot() {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
@@ -44,8 +49,14 @@ export default function App() {
     } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
       if (s) {
+        // Set Sentry user context so crash reports are linkable to a user ID
+        if (s.user?.id) {
+          setSentryUser(s.user.id);
+        }
         checkOnboarding(s);
       } else {
+        // Clear Sentry user on logout
+        clearSentryUser();
         setOnboardingComplete(false);
         setIsLoading(false);
       }
@@ -154,3 +165,7 @@ export default function App() {
     </SafeAreaProvider>
   );
 }
+
+// Wrap the root component with Sentry's error boundary so unhandled JS
+// errors are caught and reported even if they happen before React renders.
+export default Sentry.wrap(AppRoot);
