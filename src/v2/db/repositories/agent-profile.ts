@@ -6,6 +6,7 @@ export interface AgentProfile {
   agent_id: string;
   name?: string;
   coaching_tone: string;
+  personality_id: string;
   registered_at?: string;
   last_signal_pull?: string;
   dominant_state?: string;
@@ -45,12 +46,13 @@ export class AgentProfileRepository {
       );
     } else {
       this.db.runSync(
-        `INSERT INTO agent_profile (id, agent_id, name, coaching_tone, registered_at, last_signal_pull, dominant_state, tier, created_at, updated_at)
-         VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO agent_profile (id, agent_id, name, coaching_tone, personality_id, registered_at, last_signal_pull, dominant_state, tier, created_at, updated_at)
+         VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           data.agent_id,
           data.name ?? null,
           data.coaching_tone ?? 'balanced',
+          (data as any).personality_id ?? 'spark',
           data.registered_at ?? null,
           data.last_signal_pull ?? null,
           data.dominant_state ?? null,
