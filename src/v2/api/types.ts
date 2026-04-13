@@ -113,8 +113,11 @@ export interface BrainQueryRequest {
 }
 
 export interface BrainQueryResponse {
-  response: string;
+  /** Field name matches backend BrainQueryResponse.response_text */
+  response_text: string;
   query_type: string;
+  follow_up_suggestions?: string[];
+  memory_context_used?: boolean;
   tokens_used?: number;
 }
 
