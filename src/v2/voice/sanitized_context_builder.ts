@@ -55,27 +55,41 @@ export async function buildSanitizedContext(
   let signal_snapshot: Record<string, number> = {};
 
   try {
-    const signalRow = await db.getFirstAsync<{ value: string }>(
-      `SELECT value FROM sync_state WHERE key = 'last_signals'`,
+    const signalRow = await db.getFirstAsync<{
+      dominant_state: string | null;
+      consistency_score: number | null;
+      goal_drift_score: number | null;
+      stress_score: number | null;
+      disengagement_score: number | null;
+      recovery_score: number | null;
+    }>(
+      `SELECT dominant_state, consistency_score, goal_drift_score, stress_score,
+              disengagement_score, recovery_score
+       FROM sync_state WHERE id = 1`,
     );
-    if (signalRow?.value) {
-      const parsed = JSON.parse(signalRow.value);
-      dominant_state = parsed.dominant_state ?? null;
-      signal_snapshot = parsed.signals ?? {};
+    if (signalRow) {
+      dominant_state = signalRow.dominant_state ?? null;
+      signal_snapshot = {
+        consistency_score: signalRow.consistency_score ?? 0,
+        goal_drift_score: signalRow.goal_drift_score ?? 0,
+        stress_escalation_score: signalRow.stress_score ?? 0,
+        disengagement_risk_score: signalRow.disengagement_score ?? 0,
+        recovery_score: signalRow.recovery_score ?? 0,
+      };
     }
   } catch (_) {
     // No signals synced yet — proceed with empty
   }
 
-  // Read active patterns (pattern_key only — no content)
+  // Read active patterns (source_type only — no content)
   let active_patterns: string[] = [];
   try {
-    const patternRows = await db.getAllAsync<{ memory_type: string }>(
-      `SELECT DISTINCT memory_type FROM local_memory_items
+    const patternRows = await db.getAllAsync<{ source_type: string }>(
+      `SELECT DISTINCT source_type FROM local_memory_items
        WHERE is_synced = 1 AND is_private = 0
        ORDER BY created_at DESC LIMIT 10`,
     );
-    active_patterns = patternRows.map((r) => r.memory_type);
+    active_patterns = patternRows.map((r) => r.source_type);
   } catch (_) {
     // No synced patterns yet
   }

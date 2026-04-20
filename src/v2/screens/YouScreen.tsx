@@ -39,8 +39,8 @@ export default function YouScreen() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await apiClient.get('/web/agent/overview');
-        setMemoryCount(res?.data?.memory_record_count ?? null);
+        const res = await apiClient.get<any>('/web/agent/overview');
+        setMemoryCount(res?.memory_record_count ?? null);
       } catch (_) {}
     })();
   }, []);
@@ -73,8 +73,9 @@ export default function YouScreen() {
 
   const handleViewMemory = async () => {
     try {
-      const res = await apiClient.get('/web/agent/memory');
-      const patterns = res?.data ?? [];
+      // /web/agent/memory returns { items, total, page, page_size } (no .data wrapper)
+      const res = await apiClient.get<any>('/web/agent/memory');
+      const patterns = res?.items ?? [];
       const summary = patterns.map((p: any) => `• ${p.pattern_key} (${p.pattern_value?.trend ?? 'n/a'})`).join('\n');
       Alert.alert('Backend Memory', summary || 'No patterns synced yet.', [{ text: 'OK' }]);
     } catch (_) {
@@ -107,8 +108,8 @@ export default function YouScreen() {
 
   const handleBillingPortal = async () => {
     try {
-      const res = await apiClient.get('/web/billing/portal-url');
-      const url = res?.data?.portal_url;
+      const res = await apiClient.get<any>('/web/billing/portal-url');
+      const url = res?.url ?? res?.portal_url;
       if (url) {
         const { Linking } = require('react-native');
         Linking.openURL(url);

@@ -40,7 +40,8 @@ export default function GoalsScreen() {
   const load = useCallback(async () => {
     try {
       const all = await goals.findAll();
-      const active = all.filter((g: any) => g.archived_at == null);
+      // findAll() already filters is_archived = 0 at DB level; this is an extra guard
+      const active = all.filter((g: any) => g.is_archived === 0 || g.is_archived == null);
       setItems(active);
     } catch (_) {}
     setLoading(false);

@@ -38,11 +38,9 @@ export async function syncMemoryToBackend(
   if (patterns.length > 0) {
     const response = await apiClient.post<MemorySyncResponse>('/agent/memory/sync', { patterns });
 
-    // Mark processed items as synced regardless of whether they produced a pattern
-    // (they were either sanitized or safely discarded — either way, don't retry)
-    for (const item of unsynced) {
-      memoryRepo.markSynced(item.id);
-    }
+    // Batch-mark all processed items as synced in a single UPDATE (avoids N+1 writes).
+    // Items that were sanitized or discarded both get marked — neither should be retried.
+    memoryRepo.markSyncedBatch(unsynced.map((item) => item.id));
 
     // Update sync state
     try {
@@ -60,10 +58,8 @@ export async function syncMemoryToBackend(
       discarded,
     };
   } else {
-    // All items were discarded — still mark as synced to avoid retry loops
-    for (const item of unsynced) {
-      memoryRepo.markSynced(item.id);
-    }
+    // All items were discarded — batch-mark as synced to avoid retry loops
+    memoryRepo.markSyncedBatch(unsynced.map((item) => item.id));
 
     return {
       itemsProcessed: unsynced.length,

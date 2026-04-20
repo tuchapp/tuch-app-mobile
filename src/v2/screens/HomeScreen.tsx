@@ -56,7 +56,7 @@ export default function HomeScreen({ navigation }: any) {
         const active = all.filter((g: any) => g.status === 'active' || g.status === 'in_progress');
         if (active.length > 0) {
           // Pick highest priority or lowest progress as focus
-          const sorted = active.sort((a: any, b: any) => a.progress_percent - b.progress_percent);
+          const sorted = active.sort((a: any, b: any) => (a.progress ?? 0) - (b.progress ?? 0));
           setFocusGoal(sorted[0]);
         }
       } catch (_) {}
@@ -100,11 +100,11 @@ export default function HomeScreen({ navigation }: any) {
               <Text style={styles.goalTitle}>{focusGoal.title}</Text>
               <View style={styles.progressBar}>
                 <View
-                  style={[styles.progressFill, { width: `${focusGoal.progress_percent ?? 0}%` }]}
+                  style={[styles.progressFill, { width: `${focusGoal.progress ?? 0}%` }]}
                 />
               </View>
               <Text style={styles.progressText}>
-                {Math.round(focusGoal.progress_percent ?? 0)}% complete
+                {Math.round(focusGoal.progress ?? 0)}% complete
               </Text>
             </TouchableOpacity>
           </View>

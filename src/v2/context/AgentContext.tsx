@@ -74,17 +74,19 @@ export function AgentProvider({ children }: { children: ReactNode }) {
 
   const refreshSignals = useCallback(async () => {
     try {
-      const res = await apiClient.get('/agent/signals');
-      if (res?.data) {
-        const d = res.data;
+      // Backend returns: { signal_set: { ...scores, dominant_state }, computed_at }
+      // apiClient returns the raw JSON body (no envelope wrapper)
+      const res = await apiClient.get<{ signal_set: any; computed_at: string }>('/agent/signals');
+      const signalSet = res?.signal_set;
+      if (signalSet) {
         setSignals({
-          dominant_state: d.dominant_state ?? 'stable',
-          consistency_score: d.signals?.consistency_score ?? 50,
-          goal_drift_score: d.signals?.goal_drift_score ?? 0,
-          stress_escalation_score: d.signals?.stress_escalation_score ?? 0,
-          disengagement_risk_score: d.signals?.disengagement_risk_score ?? 0,
-          recovery_score: d.signals?.recovery_score ?? 50,
-          computed_at: d.computed_at ?? null,
+          dominant_state: signalSet.dominant_state ?? 'stable',
+          consistency_score: signalSet.consistency_score ?? 50,
+          goal_drift_score: signalSet.goal_drift_score ?? 0,
+          stress_escalation_score: signalSet.stress_escalation_score ?? 0,
+          disengagement_risk_score: signalSet.disengagement_risk_score ?? 0,
+          recovery_score: signalSet.recovery_score ?? 50,
+          computed_at: res?.computed_at ?? null,
         });
         setLastSignalRefresh(new Date());
       }

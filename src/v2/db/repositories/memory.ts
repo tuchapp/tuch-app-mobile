@@ -52,6 +52,17 @@ export class MemoryRepository {
     );
   }
 
+  /** Batch mark multiple items synced in a single UPDATE — avoids N+1 writes. */
+  markSyncedBatch(ids: string[]): void {
+    if (ids.length === 0) return;
+    const now = new Date().toISOString();
+    const placeholders = ids.map(() => '?').join(', ');
+    this.db.runSync(
+      `UPDATE local_memory_items SET is_synced = 1, synced_at = ? WHERE id IN (${placeholders})`,
+      [now, ...ids]
+    );
+  }
+
   findUnsynced(): LocalMemoryItem[] {
     return this.db.getAllSync<LocalMemoryItem>(
       `SELECT * FROM local_memory_items WHERE is_synced = 0 AND is_private = 0 ORDER BY created_at ASC`
